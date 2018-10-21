@@ -43,7 +43,7 @@ class WickedPdf
       raise "Bad #{EXE_NAME}'s path: #{@exe_path}" unless File.exist?(@exe_path)
       raise "#{EXE_NAME} is not executable" unless File.executable?(@exe_path)
     end
-    retrieve_binary_version
+    # retrieve_binary_version
   end
 
   def pdf_from_html_file(filepath, options = {})
@@ -84,8 +84,6 @@ class WickedPdf
     raise "Error generating PDF\n Command Error: #{err}" if options[:raise_on_all_errors] && !err.empty?
     raise "PDF could not be generated!\n Command Error: #{err}" if pdf && pdf.rstrip.empty?
     pdf
-  rescue StandardError => e
-    raise "Failed to execute:\n#{command}\nError: #{e}"
   ensure
     generated_pdf_file.close! if generated_pdf_file && !return_file
   end
@@ -93,6 +91,7 @@ class WickedPdf
   private
 
   def create_command(url, generated_pdf_file, options)
+    binding.pry
     if WickedPdf.config[:use_puppeteer]
       spec = Gem::Specification.find_by_name('wicked_pdf')
       node_modules_path = "#{Rails.root}/node_modules"
@@ -184,11 +183,7 @@ class WickedPdf
   end
 
   def valid_option(name)
-    if binary_version < BINARY_VERSION_WITHOUT_DASHES
-      "--#{name}"
-    else
-      name
-    end
+    name
   end
 
   def make_options(options, names, prefix = '', type = :string)
