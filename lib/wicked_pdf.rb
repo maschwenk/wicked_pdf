@@ -50,21 +50,17 @@ class WickedPdf
     # merge in global config options
     options.merge!(WickedPdf.config) { |_key, option, _config| option }
     generated_pdf_file = WickedPdf::Tempfile.new('wicked_pdf_generated_file.pdf', options[:temp_path])
-    command = [@binary.path]
-    command.unshift(@binary.xvfb_run_path) if options[:use_xvfb]
-    command += parse_options(options)
-    command << url
-    command << generated_pdf_file.path.to_s
 
-    print_command(command.inspect) if in_development_mode?
+    print_command(parse_options(options).inspect) if in_development_mode?
 
-    if track_progress?(options)
-      invoke_with_progress(command, options)
-    else
-      err = Open3.popen3(*command) do |_stdin, _stdout, stderr|
-        stderr.read
-      end
+    browser = Ferrum::Browser.new(browser_options: { 'no-sandbox': nil })
+
+    browser.go_to(url)
+    # Save to disk as a PDF
+    unless browser.pdf(path: generated_pdf_file.path.to_s, paper_width: 1.0, paper_height: 1.0) # => true
+      raise 'Failed to generate'
     end
+    
     if options[:return_file]
       return_file = options.delete(:return_file)
       return generated_pdf_file
